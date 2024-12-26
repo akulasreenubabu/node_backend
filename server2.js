@@ -1,7 +1,10 @@
 const express = require('express');
 const dbConnection = require('./databaseConnection');
+const cors = require('cors');
 
 const app = express();
+// Enable CORS for all origins
+app.use(cors());
 app.use(express.json());
 
 // Connect to the database when the app starts
@@ -22,15 +25,32 @@ app.get('/user/:id', async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.json({ message: 'User data successfully fetched', data: rows[0] });
+        res.json({ message: 'User data successfully fetched', status: "Success", data: rows[0] });
     } catch (error) {
         console.error('Error fetching user:', error);
-        res.status(500).json({ message: 'Something went wrong! Contact Administrator' });
+        res.status(500).json({ message: 'Something went wrong! Contact Administrator', status: "Failure" });
+    }
+});
+
+// GET users
+app.get('/users', async (req, res) => {
+    try {
+        const client = dbConnection.connect2();  // Get the single connection
+
+        // Use parameterized query to prevent SQL injection
+        const [rows] = await client.promise().query('SELECT * FROM users');
+
+        console.log('Users:', rows);
+
+        res.json({ message: 'Users data successfully fetched', status: "Success", data: rows });
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ message: 'Something went wrong! Contact Administrator', status: "Failure"});
     }
 });
 
 // POST new users
-app.post('/user', async (req, res) => {
+app.post('/users', async (req, res) => {
     try {
         const body = req.body;
         console.log('Request body:', JSON.stringify(body));
@@ -42,10 +62,10 @@ app.post('/user', async (req, res) => {
         const [result] = await client.promise().query(query, [values]);
         console.log('Insert result:', result);
 
-        res.json({ message: "Users added successfully", data: body });
+        res.json({ message: "Users added successfully", status: "Success", data: body });
     } catch (error) {
         console.error('Error adding users:', error);
-        res.status(500).json({ message: "Something went wrong! Contact Administrator" });
+        res.status(500).json({ message: "Something went wrong! Contact Administrator", status: "Failure" });
     }
 });
 
@@ -66,10 +86,10 @@ app.put('/user/:id', async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json({ message: "User successfully updated" });
+        res.json({ message: "User successfully updated", status: "Success" });
     } catch (error) {
         console.error('Error updating user:', error);
-        res.status(500).json({ message: "Something went wrong! Contact Administrator" });
+        res.status(500).json({ message: "Something went wrong! Contact Administrator", status: "Failure" });
     }
 });
 
@@ -88,10 +108,10 @@ app.delete('/user/:id', async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        res.json({ message: "User successfully deleted" });
+        res.json({ message: "User successfully deleted", status: "Success" });
     } catch (error) {
         console.error('Error deleting user:', error);
-        res.status(500).json({ message: "Something went wrong! Contact Administrator" });
+        res.status(500).json({ message: "Something went wrong! Contact Administrator", status: "Failure"  });
     }
 });
 
